@@ -1,0 +1,11 @@
+{
+  "name": "statics",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "caoyongzheng 15267056106@163.com",
+  "license": "ISC"
+}

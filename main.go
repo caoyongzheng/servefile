@@ -1,18 +1,64 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-
-	"github.com/go-martini/martini"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func main() {
-	var port = flag.String("port", "8080", "port to listen")
-	var content = flag.String("content", "", "file to server")
+	var addr = flag.String("addr", "127.0.0.1:8080", "addr to listen")
+	var content = flag.String("content", ".", "file to server")
 	flag.Parse()
-	m := martini.Classic()
-	m.Use(martini.Static(
-		*content,
-	))
-	m.RunOnAddr(":" + *port)
+	abs, err := filepath.Abs(*content)
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Write([]byte(abs))
+		}
+	})
+	http.HandleFunc("/treenode", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			nodepath := filepath.Join(abs, r.URL.Query().Get("path"))
+			relpath, _ := filepath.Rel(abs, nodepath)
+			fileStat, err := os.Stat(nodepath)
+			if err != nil {
+				w.Write([]byte(err.Error()))
+				return
+			}
+			treenode := map[string]interface{}{
+				"name":  fileStat.Name(),
+				"isDir": fileStat.IsDir(),
+				"path":  relpath,
+			}
+			if fileStat.IsDir() {
+				children := make([]interface{}, 0)
+				infos, _ := ioutil.ReadDir(nodepath)
+				for _, info := range infos {
+					children = append(children, map[string]interface{}{
+						"name":  info.Name(),
+						"isDir": info.IsDir(),
+						"path":  filepath.Join(relpath, info.Name()),
+					})
+				}
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+				treenode["children"] = children
+			}
+			treeNodeByte, err := json.Marshal(treenode)
+			w.Write([]byte(treeNodeByte))
+		}
+	})
+	http.ListenAndServe(*addr, nil)
+	log.Printf("listen at %s", *addr)
 }
