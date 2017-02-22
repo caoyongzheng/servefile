@@ -19,9 +19,17 @@ func main() {
 		log.Fatalln(err)
 		return
 	}
+	http.HandleFunc("/dist/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join("statics", r.URL.Path))
+	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			w.Write([]byte(abs))
+			fb, err := ioutil.ReadFile("statics/dist/index.html")
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			w.Write(fb)
 		}
 	})
 	http.HandleFunc("/treenode", func(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +38,7 @@ func main() {
 			relpath, _ := filepath.Rel(abs, nodepath)
 			fileStat, err := os.Stat(nodepath)
 			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte(err.Error()))
 				return
 			}
@@ -39,14 +48,14 @@ func main() {
 				"path":  relpath,
 			}
 			if fileStat.IsDir() {
-				children := make([]interface{}, 0)
+				children := make(map[string]interface{}, 0)
 				infos, _ := ioutil.ReadDir(nodepath)
 				for _, info := range infos {
-					children = append(children, map[string]interface{}{
+					children[info.Name()] = map[string]interface{}{
 						"name":  info.Name(),
 						"isDir": info.IsDir(),
 						"path":  filepath.Join(relpath, info.Name()),
-					})
+					}
 				}
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
