@@ -1,7 +1,11 @@
 <template lang="html">
   <div id="main">
-    <div class="tree-wrap">
+    <div class="tree-wrap" :style="{ width: treeWidth + 'px' }">
       <Tree />
+      <div class="drag-line" v-on:mousedown="onMouseDown" />
+    </div>
+    <div class="editor-wrap">
+      <textarea class="textarea"></textarea>
     </div>
   </div>
 </template>
@@ -16,12 +20,29 @@ export default {
   components: { Tree },
   data() {
     return {
-      tree: {}
+      treeWidth: 260,
+      minWidth: 260,
+      moving: false,
     }
   },
   mounted() {
     this.$store.dispatch('getNode')
+    document.addEventListener('mousemove', (e) => {
+      if (this.moving) {
+        this.treeWidth = Math.max(this.minWidth, e.clientX)
+      }
+    }, true)
+    document.addEventListener('mouseup', () => {
+      if (this.moving) {
+        this.moving = false
+      }
+    })
   },
+  methods: {
+    onMouseDown(e) {
+      this.moving = true
+    },
+  }
 }
 </script>
 
@@ -34,11 +55,47 @@ export default {
   html,body {
     margin: 0;
   }
+
+</style>
+<style lang="css" scoped>
   .tree-wrap {
-    width: 260px;
+    position: relative;
+    box-sizing: border-box;
     overflow: auto;
     height: 100vh;
     position: relative;
     background-color: #21252B;
+    border-right: solid 2px #181A1F;
+  }
+  .drag-line {
+    height: 100%;
+    width: 4px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    cursor: col-resize;
+  }
+  .editor-wrap {
+    flex: 1;
+    position: relative;
+  }
+  .textarea {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    border: none;
+    outline: none;
+    background-color: #282C34;
+    color: #ABB2BF;
+    font-size: 20px;
+    line-height: 1.5;
+  }
+  textarea::-webkit-input-placeholder{
+    text-shadow: none;
+    -webkit-text-fill-color: initial;
   }
 </style>

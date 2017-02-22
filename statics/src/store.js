@@ -9,7 +9,8 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
   state: {
-    tree: {}
+    tree: {},
+    active: ''
   },
   mutations: {
     set(state, node) {
@@ -22,7 +23,10 @@ const store = new Vuex.Store({
         set(tree, paths, node)
         state.tree = merge({},state.tree, tree)
       }
-    }
+    },
+    setActive(state, active) {
+      state.active = active
+    },
   },
   actions: {
     getNode(context, p = '') {

@@ -2,11 +2,12 @@
   <div class="tree">
     <div
       class="header"
-      :class="{ dir: node.isDir }"
-      :style="{ paddingLeft: level * 15 + 10 + 'px' }"
       v-on:click="toggle"
+      :style="{ paddingLeft: level * 15 + 8 + 'px' }"
+      :class="{ active }"
     >
-      <ArrowIcon v-if="node.isDir" /> {{ node.name }}
+      <ArrowIcon v-if="node.isDir" :down="!!node.open" />
+      <span :class="{ leaf: !node.isDir }">{{ node.name }}</span>
     </div>
     <Tree v-for="n in node.children" v-if="node.open" :path="n.path"></Tree>
   </div>
@@ -42,10 +43,11 @@ export default {
     toggle() {
       const node = this.node
       node.open = !node.open
-      if (node.isDir && !node.loaded) {
+      if (!node.loaded) {
         node.loaded = true
         this.$store.dispatch('getNode', node.path)
       }
+      this.$store.commit('setActive', node.path)
       this.$store.commit('set', node)
     },
   },
@@ -59,6 +61,9 @@ export default {
         return 0
       }
       return path.split('/').filter(s => s).length
+    },
+    active() {
+      return this.$store.state.active === this.node.path
     }
   },
 }
@@ -75,10 +80,10 @@ export default {
     height: 2em;
     line-height: 2em;
   }
-  .header:hover {
+  .header:hover, .active {
     background-color: #2C313A;
   }
-  .header.dir {
-
+  .header .leaf {
+    padding-left: 18px;
   }
 </style>

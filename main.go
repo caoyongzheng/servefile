@@ -63,6 +63,9 @@ func main() {
 					return
 				}
 				treenode["children"] = children
+			} else {
+				fb, _ := ioutil.ReadFile(nodepath)
+				treenode["content"] = string(fb)
 			}
 			treeNodeByte, err := json.Marshal(treenode)
 			w.Write([]byte(treeNodeByte))
