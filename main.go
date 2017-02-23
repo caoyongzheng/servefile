@@ -32,6 +32,36 @@ func main() {
 			w.Write(fb)
 		}
 	})
+	http.HandleFunc("/treeleaf", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			defer r.Body.Close()
+			var leaf = make(map[string]string, 2)
+			err := json.NewDecoder(r.Body).Decode(&leaf)
+			if err != nil {
+				data, _ := json.Marshal(map[string]interface{}{
+					"success": false,
+					"err":     err.Error(),
+				})
+				w.Write(data)
+				return
+			}
+			nodepath := filepath.Join(abs, leaf["path"])
+			err = ioutil.WriteFile(nodepath, []byte(leaf["content"]), 0644)
+			log.Println(nodepath, leaf["content"])
+			if err != nil {
+				data, _ := json.Marshal(map[string]interface{}{
+					"success": false,
+					"err":     err.Error(),
+				})
+				w.Write(data)
+				return
+			}
+			data, _ := json.Marshal(map[string]interface{}{
+				"success": true,
+			})
+			w.Write(data)
+		}
+	})
 	http.HandleFunc("/treenode", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			nodepath := filepath.Join(abs, r.URL.Query().Get("path"))

@@ -3,7 +3,9 @@ var webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  entry: './src/main.js',
+  entry: {
+    main: ['./src/main.js']
+  },
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/dist/',
@@ -13,25 +15,27 @@ module.exports = {
     rules: [
       {
         test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            // css: 'postcss-loader',
-          },
-          postcss() {
-            return [require('autoprefixer')]
+        use: {
+          loader: 'vue-loader',
+          options: {
+            postcss() {
+              return [require('autoprefixer')]
+            }
           }
-          // other vue-loader options go here
         }
       },
       {
         test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
+        use: 'babel-loader',
+        exclude: [/node_modules/, /src\/lib/]
+      },
+      {
+        test: /\.css$/,
+        loader: 'style-loader!css-loader!postcss-loader'
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
-        loader: 'url-loader',
+        use: 'url-loader',
       }
     ]
   },
@@ -40,8 +44,16 @@ module.exports = {
       chunks: ['main'],
       hash: true,
       template: path.resolve('./src/index.html'),
-      filename: path.resolve('./dist/index.html')
+      filename: path.resolve('./dist/index.html'),
     }),
+    new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      options: {
+        test: /\.(css|less|scss)$/,
+        context: __dirname,
+        postcss: [require('autoprefixer')]
+      }
+    })
   ],
   devtool: '#eval-source-map'
 }
@@ -59,9 +71,6 @@ if (process.env.NODE_ENV === 'production') {
       compress: {
         warnings: false
       }
-    }),
-    new webpack.LoaderOptionsPlugin({
-      minimize: true
     })
   ])
 }

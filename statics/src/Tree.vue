@@ -15,7 +15,9 @@
 
 <script>
 import get from 'lodash/get'
+import merge from 'lodash/merge'
 import ArrowIcon from './ArrowIcon.vue'
+import utils from './utils.js'
 
 export default {
   name: 'Tree',
@@ -31,24 +33,40 @@ export default {
       if (!path || path === '' || path === '.') {
         return this.$store.state.tree
       }
-      const splitpaths = path.split('/')
-      const paths = []
-      for (let i = 0; i < splitpaths.length; i++) {
-        if (splitpaths[i]) {
-          paths.push('children', splitpaths[i])
-        }
-      }
+      const paths = utils.getPaths(path)
       return get(this.$store.state.tree, paths)
     },
     toggle() {
       const node = this.node
-      node.open = !node.open
-      if (!node.loaded) {
-        node.loaded = true
-        this.$store.dispatch('getNode', node.path)
+      if (node.isDir) {
+        node.open = !node.open
+        if (!node.loaded) {
+          node.loaded = true
+          this.$store.dispatch('getNode', node.path)
+          .then((n) => {
+            merge(node, n)
+            this.$store.commit('set', node)
+            this.$store.commit('setActive', node.path)
+          })
+        } else {
+          this.$store.commit('set', node)
+          this.$store.commit('setActive', node.path)
+        }
+      } else {
+        if (!node.loaded) {
+          node.loaded = true
+          this.$store.dispatch('getNode', node.path)
+          .then((n) => {
+            merge(node, n)
+            this.$store.commit('setTextArea', node.content)
+            this.$store.commit('setActive', node.path)
+            this.$store.commit('set', node)
+          })
+        } else {
+          this.$store.commit('setActive', node.path)
+          this.$store.commit('set', node)
+        }
       }
-      this.$store.commit('setActive', node.path)
-      this.$store.commit('set', node)
     },
   },
   computed: {
