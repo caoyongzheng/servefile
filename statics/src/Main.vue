@@ -50,7 +50,7 @@ export default {
         alert('curnode is Folder')
         return
       } else {
-        fetch('/treeleaf', {
+        fetch(`${process.env.BaseURL}/treeleaf`, {
           method: 'POST',
           header: {
             Accept: 'application/json',

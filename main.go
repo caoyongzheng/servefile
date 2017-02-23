@@ -13,23 +13,26 @@ import (
 func main() {
 	var addr = flag.String("addr", "127.0.0.1:8080", "addr to listen")
 	var content = flag.String("content", ".", "file to server")
+	var statics = flag.String("statics", "statics", "statics")
 	flag.Parse()
-	abs, err := filepath.Abs(*content)
-	if err != nil {
-		log.Fatalln(err)
+	abs, e := filepath.Abs(*content)
+	if e != nil {
+		log.Fatalln(e)
 		return
 	}
 	http.HandleFunc("/dist/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join("statics", r.URL.Path))
+		http.ServeFile(w, r, filepath.Join(*statics, r.URL.Path))
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			fb, err := ioutil.ReadFile("statics/dist/index.html")
+			fb, err := ioutil.ReadFile(filepath.Join(*statics, "/dist/index.html"))
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
 			w.Write(fb)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	})
 	http.HandleFunc("/treeleaf", func(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +50,6 @@ func main() {
 			}
 			nodepath := filepath.Join(abs, leaf["path"])
 			err = ioutil.WriteFile(nodepath, []byte(leaf["content"]), 0644)
-			log.Println(nodepath, leaf["content"])
 			if err != nil {
 				data, _ := json.Marshal(map[string]interface{}{
 					"success": false,
@@ -60,6 +62,8 @@ func main() {
 				"success": true,
 			})
 			w.Write(data)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	})
 	http.HandleFunc("/treenode", func(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +103,15 @@ func main() {
 			}
 			treeNodeByte, err := json.Marshal(treenode)
 			w.Write([]byte(treeNodeByte))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	})
-	http.ListenAndServe(*addr, nil)
 	log.Printf("listen at %s", *addr)
+	log.Printf("abs: %s", abs)
+	log.Printf("statics: %s", *statics)
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		panic(err)
+	}
 }

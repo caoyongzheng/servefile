@@ -34,7 +34,7 @@ const store = new Vuex.Store({
   },
   actions: {
     getNode(context, p = '') {
-      return fetch(`/treenode?path=${p}`)
+      return fetch(`${process.env.BaseURL}/treenode?path=${p}`)
       .then(r => r.json())
       .then(treenode => {
         context.commit('set', treenode)
@@ -53,7 +53,7 @@ const store = new Vuex.Store({
         }
         return
       }
-      fetch(`/treenode?path=${node.path}`)
+      fetch(`${process.env.BaseURL}/treenode?path=${node.path}`)
       .then(r => r.json())
       .then(n => {
         node = merge(node, n)
